@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 import time
+from collections import Counter
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -26,6 +29,29 @@ def _looks_like_false_hit(query: str, cached_key: str) -> bool:
     nums_q = set(re.findall(r"\b\d{4}\b", query))
     nums_c = set(re.findall(r"\b\d{4}\b", cached_key))
     return bool(nums_q and nums_c and nums_q != nums_c)
+
+
+# ---------------------------------------------------------------------------
+# Token vector helpers for n-gram cosine similarity
+# ---------------------------------------------------------------------------
+
+_WORD_RE = re.compile(r"[a-z0-9]+")
+
+
+@lru_cache(maxsize=8192)
+def _token_vector(text: str) -> tuple[Counter[str], float]:
+    """Return the bag-of-tokens Counter (word tokens + char 3-grams) and its L2 norm.
+
+    Memoized because the same query/key strings are compared many times during a
+    single cache scan and across scans; tokenization is the expensive part.
+    """
+    counter: Counter[str] = Counter()
+    for word in _WORD_RE.findall(text.lower()):
+        counter[word] += 1
+        for i in range(len(word) - 2):
+            counter[word[i : i + 3]] += 1
+    norm = math.sqrt(sum(count * count for count in counter.values()))
+    return counter, norm
 
 
 # ---------------------------------------------------------------------------
@@ -53,6 +79,7 @@ class ResponseCache:
         self.ttl_seconds = ttl_seconds
         self.similarity_threshold = similarity_threshold
         self._entries: list[CacheEntry] = []
+        self.false_hit_log: list[dict[str, object]] = []
 
     def get(self, query: str) -> tuple[str | None, float]:
         """Look up a cached response by semantic similarity.
@@ -70,16 +97,53 @@ class ResponseCache:
         You'll need a self.false_hit_log: list[dict[str, object]] attribute
         (add it in __init__).
         """
-        raise NotImplementedError("TODO: implement get()")
+        if _is_uncacheable(query):
+            return None, 0.0
+
+        now = time.time()
+        # Evict expired entries in place so the scan below stays cheap over time.
+        self._entries = [e for e in self._entries if now - e.created_at <= self.ttl_seconds]
+
+        best_value: str | None = None
+        best_key: str | None = None
+        best_score = 0.0
+        for entry in self._entries:
+            score = self.similarity(query, entry.key)
+            if score > best_score:
+                best_score = score
+                best_value = entry.value
+                best_key = entry.key
+                if score == 1.0:
+                    break
+
+        if best_key is None or best_score < self.similarity_threshold:
+            return None, best_score
+
+        if _looks_like_false_hit(query, best_key):
+            self.false_hit_log.append(
+                {
+                    "query": query,
+                    "cached_key": best_key,
+                    "score": best_score,
+                    "reason": "date_or_number_mismatch",
+                }
+            )
+            return None, best_score
+
+        return best_value, best_score
 
     def set(self, query: str, value: str, metadata: dict[str, str] | None = None) -> None:
-        """Store a response in cache.
-
-        TODO(student): Implement with privacy guardrail:
-        1. Return immediately if _is_uncacheable(query)
-        2. Append a CacheEntry to self._entries
-        """
-        raise NotImplementedError("TODO: implement set()")
+        """Store a response in cache, unless the query is privacy-sensitive."""
+        if _is_uncacheable(query):
+            return
+        self._entries.append(
+            CacheEntry(
+                key=query,
+                value=value,
+                created_at=time.time(),
+                metadata=metadata or {},
+            )
+        )
 
     @staticmethod
     def similarity(a: str, b: str) -> float:
@@ -98,7 +162,18 @@ class ResponseCache:
         Hint: Use collections.Counter and math.sqrt.
         Import them at the top of the file.
         """
-        raise NotImplementedError("TODO: implement similarity()")
+        if a == b:
+            return 1.0
+
+        vec_a, norm_a = _token_vector(a)
+        vec_b, norm_b = _token_vector(b)
+        if norm_a == 0.0 or norm_b == 0.0:
+            return 0.0
+
+        # Iterate the smaller vector for the dot product.
+        smaller, larger = (vec_a, vec_b) if len(vec_a) <= len(vec_b) else (vec_b, vec_a)
+        dot = sum(count * larger.get(token, 0) for token, count in smaller.items())
+        return dot / (norm_a * norm_b)
 
 
 # ---------------------------------------------------------------------------
