@@ -13,7 +13,8 @@ run-chaos:
 	python scripts/run_chaos.py --config configs/default.yaml --out reports/metrics.json
 
 report:
-	python scripts/generate_report.py --metrics reports/metrics.json --out reports/final_report.md
+	python scripts/scenario_breakdown.py --config configs/default.yaml --out reports/metrics_by_scenario.json
+	python scripts/generate_report.py --metrics reports/metrics.json --out reports/generated_summary.md
 
 docker-up:
 	docker compose up -d
@@ -22,4 +23,4 @@ docker-down:
 	docker compose down
 
 clean:
-	rm -rf .pytest_cache .ruff_cache .mypy_cache reports/metrics.json reports/final_report.md
+	rm -rf .pytest_cache .ruff_cache .mypy_cache reports/metrics.json reports/generated_summary.md reports/metrics_by_scenario.json

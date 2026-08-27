@@ -76,6 +76,28 @@ def calculate_recovery_time_ms(gateway: ReliabilityGateway) -> float | None:
     return sum(recovery_times_ms) / len(recovery_times_ms)
 
 
+def reset_shared_cache(config: LabConfig) -> None:
+    """Flush the Redis-backed cache so each chaos scenario starts cold.
+
+    Scenarios must be isolated: a hot shared cache carried over from a previous
+    scenario suppresses provider calls, which stops the circuit breaker from ever
+    tripping and makes recovery-time evidence disappear.  In-memory caches are
+    already per-gateway so nothing to do there.
+    """
+    if not config.cache.enabled or config.cache.backend != "redis":
+        return
+    try:
+        cache = SharedRedisCache(
+            config.cache.redis_url,
+            config.cache.ttl_seconds,
+            config.cache.similarity_threshold,
+        )
+        cache.flush()
+        cache.close()
+    except Exception as exc:  # noqa: BLE001 - best effort; Redis may be down, never fatal
+        print(f"warning: could not flush shared cache: {exc}")
+
+
 def run_scenario(config: LabConfig, queries: list[str], scenario: ScenarioConfig) -> RunMetrics:
     """Run a single named chaos scenario.
 
@@ -97,6 +119,7 @@ def run_scenario(config: LabConfig, queries: list[str], scenario: ScenarioConfig
     5. Set recovery_time_ms via calculate_recovery_time_ms(gateway)
     6. Return metrics
     """
+    reset_shared_cache(config)
     gateway = build_gateway(config, scenario.provider_overrides or None)
     metrics = RunMetrics()
     rng = random.Random()

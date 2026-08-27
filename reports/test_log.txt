@@ -1,0 +1,106 @@
+### 1. Redis running (docker compose ps)
+NAME                                                    IMAGE            COMMAND                  SERVICE   CREATED          STATUS                    PORTS
+k4-day25-track3-2a202601172-nguyenthithutrang-redis-1   redis:7-alpine   "docker-entrypoint.s…"   redis     55 minutes ago   Up 55 minutes (healthy)   0.0.0.0:6379->6379/tcp
+
+### 2. pip install -e .[dev]  (grader step — assumed done)
+
+### 3. pytest -v
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\Thu Trang\miniconda3\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Thu Trang\Downloads\K4-Day25-Track3-2A202601172-NguyenThiThuTrang
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.0.0, anyio-4.14.2, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 42 items
+
+tests/test_cache.py::test_exact_match_returns_hit PASSED                 [  2%]
+tests/test_cache.py::test_similar_query_returns_hit PASSED               [  4%]
+tests/test_cache.py::test_dissimilar_query_returns_miss PASSED           [  7%]
+tests/test_cache.py::test_ttl_expiry PASSED                              [  9%]
+tests/test_cache.py::test_privacy_query_bypasses_cache PASSED            [ 11%]
+tests/test_cache.py::test_privacy_query_not_stored PASSED                [ 14%]
+tests/test_cache.py::test_false_hit_detection_different_years PASSED     [ 16%]
+tests/test_cache.py::test_same_year_not_flagged_as_false_hit PASSED      [ 19%]
+tests/test_cache.py::test_ngram_similarity_scores PASSED                 [ 21%]
+tests/test_circuit_breaker.py::test_starts_closed PASSED                 [ 23%]
+tests/test_circuit_breaker.py::test_opens_after_failure_threshold PASSED [ 26%]
+tests/test_circuit_breaker.py::test_does_not_open_below_threshold PASSED [ 28%]
+tests/test_circuit_breaker.py::test_success_resets_failure_count PASSED  [ 30%]
+tests/test_circuit_breaker.py::test_open_transitions_to_half_open_after_timeout PASSED [ 33%]
+tests/test_circuit_breaker.py::test_half_open_closes_on_success PASSED   [ 35%]
+tests/test_circuit_breaker.py::test_half_open_reopens_on_failure PASSED  [ 38%]
+tests/test_circuit_breaker.py::test_call_raises_circuit_open_error PASSED [ 40%]
+tests/test_circuit_breaker.py::test_call_records_success_and_failure PASSED [ 42%]
+tests/test_circuit_breaker.py::test_transition_log_records_state_changes PASSED [ 45%]
+tests/test_circuit_breaker.py::test_no_duplicate_transitions PASSED      [ 47%]
+tests/test_circuit_breaker.py::test_success_threshold_greater_than_one PASSED [ 50%]
+tests/test_config.py::test_default_config_loads PASSED                   [ 52%]
+tests/test_config.py::test_scenarios_loaded PASSED                       [ 54%]
+tests/test_gateway_contract.py::test_gateway_returns_response_with_route_reason PASSED [ 57%]
+tests/test_gateway_contract.py::test_gateway_falls_back_when_primary_fails PASSED [ 59%]
+tests/test_gateway_contract.py::test_gateway_returns_static_fallback_when_all_fail PASSED [ 61%]
+tests/test_gateway_contract.py::test_gateway_uses_cache PASSED           [ 64%]
+tests/test_metrics.py::test_percentile PASSED                            [ 66%]
+tests/test_metrics.py::test_report_dict_contains_required_metrics PASSED [ 69%]
+tests/test_redis_cache.py::test_redis_connection PASSED                  [ 71%]
+tests/test_redis_cache.py::test_set_and_exact_get PASSED                 [ 73%]
+tests/test_redis_cache.py::test_ttl_expiry PASSED                        [ 76%]
+tests/test_redis_cache.py::test_shared_state_across_instances PASSED     [ 78%]
+tests/test_redis_cache.py::test_privacy_query_not_cached PASSED          [ 80%]
+tests/test_redis_cache.py::test_false_hit_different_years PASSED         [ 83%]
+tests/test_todo_requirements.py::test_similarity_uses_ngrams_not_jaccard XPASS [ 85%]
+tests/test_todo_requirements.py::test_semantic_cache_should_not_false_hit_different_intent XPASS [ 88%]
+tests/test_todo_requirements.py::test_privacy_queries_never_cached XPASS [ 90%]
+tests/test_todo_requirements.py::test_circuit_breaker_denies_when_open XPASS [ 92%]
+tests/test_todo_requirements.py::test_half_open_failure_gives_probe_failure_reason XPASS [ 95%]
+tests/test_todo_requirements.py::test_gateway_routes_through_providers XPASS [ 97%]
+tests/test_todo_requirements.py::test_metrics_csv_export XPASS (Stud...) [100%]
+
+=================================== PASSES ====================================
+=================================== XPASSES ===================================
+=========================== short test summary info ===========================
+PASSED tests/test_cache.py::test_exact_match_returns_hit
+PASSED tests/test_cache.py::test_similar_query_returns_hit
+PASSED tests/test_cache.py::test_dissimilar_query_returns_miss
+PASSED tests/test_cache.py::test_ttl_expiry
+PASSED tests/test_cache.py::test_privacy_query_bypasses_cache
+PASSED tests/test_cache.py::test_privacy_query_not_stored
+PASSED tests/test_cache.py::test_false_hit_detection_different_years
+PASSED tests/test_cache.py::test_same_year_not_flagged_as_false_hit
+PASSED tests/test_cache.py::test_ngram_similarity_scores
+PASSED tests/test_circuit_breaker.py::test_starts_closed
+PASSED tests/test_circuit_breaker.py::test_opens_after_failure_threshold
+PASSED tests/test_circuit_breaker.py::test_does_not_open_below_threshold
+PASSED tests/test_circuit_breaker.py::test_success_resets_failure_count
+PASSED tests/test_circuit_breaker.py::test_open_transitions_to_half_open_after_timeout
+PASSED tests/test_circuit_breaker.py::test_half_open_closes_on_success
+PASSED tests/test_circuit_breaker.py::test_half_open_reopens_on_failure
+PASSED tests/test_circuit_breaker.py::test_call_raises_circuit_open_error
+PASSED tests/test_circuit_breaker.py::test_call_records_success_and_failure
+PASSED tests/test_circuit_breaker.py::test_transition_log_records_state_changes
+PASSED tests/test_circuit_breaker.py::test_no_duplicate_transitions
+PASSED tests/test_circuit_breaker.py::test_success_threshold_greater_than_one
+PASSED tests/test_config.py::test_default_config_loads
+PASSED tests/test_config.py::test_scenarios_loaded
+PASSED tests/test_gateway_contract.py::test_gateway_returns_response_with_route_reason
+PASSED tests/test_gateway_contract.py::test_gateway_falls_back_when_primary_fails
+PASSED tests/test_gateway_contract.py::test_gateway_returns_static_fallback_when_all_fail
+PASSED tests/test_gateway_contract.py::test_gateway_uses_cache
+PASSED tests/test_metrics.py::test_percentile
+PASSED tests/test_metrics.py::test_report_dict_contains_required_metrics
+PASSED tests/test_redis_cache.py::test_redis_connection
+PASSED tests/test_redis_cache.py::test_set_and_exact_get
+PASSED tests/test_redis_cache.py::test_ttl_expiry
+PASSED tests/test_redis_cache.py::test_shared_state_across_instances
+PASSED tests/test_redis_cache.py::test_privacy_query_not_cached
+PASSED tests/test_redis_cache.py::test_false_hit_different_years
+XPASS tests/test_todo_requirements.py::test_similarity_uses_ngrams_not_jaccard - Students must implement ResponseCache.similarity with n-gram cosine
+XPASS tests/test_todo_requirements.py::test_semantic_cache_should_not_false_hit_different_intent - Students must implement false-hit detection in ResponseCache.get()
+XPASS tests/test_todo_requirements.py::test_privacy_queries_never_cached - Students must implement privacy guardrails in ResponseCache
+XPASS tests/test_todo_requirements.py::test_circuit_breaker_denies_when_open - Students must implement CircuitBreaker.allow_request()
+XPASS tests/test_todo_requirements.py::test_half_open_failure_gives_probe_failure_reason - Students must implement CircuitBreaker.record_failure() with separate HALF_OPEN handling
+XPASS tests/test_todo_requirements.py::test_gateway_routes_through_providers - Students must implement ReliabilityGateway.complete()
+XPASS tests/test_todo_requirements.py::test_metrics_csv_export - Students must implement metrics.write_csv()
+======================== 35 passed, 7 xpassed in 6.96s ========================
